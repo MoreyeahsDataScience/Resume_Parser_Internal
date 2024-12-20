@@ -15,7 +15,7 @@ from langchain.prompts import PromptTemplate
 
 
 # Set up pytesseract path for image OCR
-pt.pytesseract.tesseract_cmd = r'D:\Digi_ocr_file\Tesseract-OCR\tesseract.exe'
+pt.pytesseract.tesseract_cmd = rf'{os.getcwd()}\\tesseract.exe'
 
 # Model and API key
 model_name = "gemini-1.5-flash-001"
