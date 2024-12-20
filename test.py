@@ -5,7 +5,6 @@ import re
 import subprocess
 import tempfile
 from io import BytesIO
-import docx2txt
 import pytesseract as pt
 from PIL import Image
 import pandas as pd
@@ -13,7 +12,7 @@ import os
 import streamlit as st
 from langchain_google_genai import GoogleGenerativeAI
 from langchain.prompts import PromptTemplate
-from pdfminer.high_level import extract_text as extract_text_pdf
+
 
 # Set up pytesseract path for image OCR
 pt.pytesseract.tesseract_cmd = r'D:\Digi_ocr_file\Tesseract-OCR\tesseract.exe'
@@ -23,50 +22,6 @@ model_name = "gemini-1.5-flash-001"
 api_key = "AIzaSyCwccuIEZTRYt0AyD1EdNOo41soO8oY6CE"
 
 # Define function to extract text from various file types
-def extract_text_from_pdf(contents: bytes) -> str:
-    try:
-        text = extract_text_pdf(BytesIO(contents))
-        text = re.sub(r"[#=]", "", text)
-        text = re.sub(r"[^\x00-\x7F]+", "", text)
-        text = re.sub(r" +", " ", text).strip()  # Remove leading and trailing spaces
-        if not text.replace(" ", ""):  # Check if text contains only spaces
-            raise ValueError("No words found in the extracted text")
-        return text
-    except Exception as e:
-        raise ValueError(f"Error extracting text from PDF: {str(e)}")
-
-def extract_text_from_docx(contents: bytes) -> str:
-    try:
-        text = docx2txt.process(BytesIO(contents))
-        text = re.sub(r"[#=]", "", text)
-        text = re.sub(r"[^\x00-\x7F]+", "", text)
-        text = re.sub(r" +", " ", text).strip()  # Remove leading and trailing spaces
-        if not text.replace(" ", ""):  # Check if text contains only spaces
-            raise ValueError("No words found in the extracted text")
-        return text
-    except Exception as e:
-        raise ValueError(f"Error extracting text from DOCX: {str(e)}")
-
-def extract_text_from_doc(contents: bytes) -> str:
-    try:
-        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-            tmp_file.write(contents)
-            tmp_file_path = tmp_file.name
-
-        process = subprocess.Popen(['antiword', tmp_file_path], stdout=subprocess.PIPE)
-        output, _ = process.communicate()
-
-        text = output.decode('utf-8')
-        text = re.sub(r"[#=]", "", text)
-        text = re.sub(r"[^\x00-\x7F]+", "", text)
-        text = re.sub(r" +", " ", text).strip()  # Remove leading and trailing spaces
-
-        if not text.replace(" ", ""):
-            raise ValueError("No words found in the extracted text")
-
-        return text
-    except Exception as e:
-        raise ValueError(f"Error extracting text from DOC: {str(e)}")
 
 def extract_text_from_image(contents: bytes) -> str:
     try:
@@ -132,16 +87,11 @@ def main():
 
                 # Check file extension and extract text accordingly
                 file_extension = uploaded_file.name.split(".")[-1].lower()
-                if file_extension == "pdf":
-                    resume_text = extract_text_from_pdf(contents)
-                elif file_extension == "docx":
-                    resume_text = extract_text_from_docx(contents)
-                elif file_extension == "doc":
-                    resume_text = extract_text_from_doc(contents)
-                elif file_extension in ["jpg", "jpeg", "png"]:
+                
+                if file_extension in ["jpg", "jpeg", "png"]:
                     resume_text = extract_text_from_image(contents)
                 else:
-                    raise ValueError(f"Unsupported file format: {uploaded_file.name}. Only PDF, DOCX, DOC, and image files are supported.")
+                    raise ValueError(f"Unsupported file format: {uploaded_file.name}. Only image files are supported.")
 
                 # Process resume and extract details
                 if not resume_text:
